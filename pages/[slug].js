@@ -1,30 +1,30 @@
 import { Fragment } from "react";
 import Head from "next/head";
-import { getDatabase, getPage, getBlocks } from "../lib/notion";
+import 'katex/dist/katex.min.css';
+import { getDatabase, getPage, getBlocks, getId } from "../lib/notion";
 import Link from "next/link";
-import { databaseId } from "./index.js";
-import styles from "./post.module.css";
+import { BlockMath } from 'react-katex';
 
 export const Text = ({ text }) => {
-  if (!text) {
-    return null;
+  if (text.length == 0) {
+    return <span className="select-none">&nbsp;</span>;
   }
   return text.map((value) => {
     const {
       annotations: { bold, code, color, italic, strikethrough, underline },
-      text,
+      text
     } = value;
     return (
       <span
         className={[
-          bold ? styles.bold : "",
-          code ? styles.code : "",
-          italic ? styles.italic : "",
-          strikethrough ? styles.strikethrough : "",
-          underline ? styles.underline : "",
+          bold ? "font-bold" : "",
+          code ? "font-mono" : "",
+          italic ? "italic" : "",
+          strikethrough ? "line-through" : "",
+          underline ? "underline" : "",
         ].join(" ")}
         style={color !== "default" ? { color } : {}}
-      >
+        >
         {text.link ? <a href={text.link.url}>{text.content}</a> : text.content}
       </span>
     );
@@ -37,11 +37,11 @@ const renderBlock = (block) => {
 
   switch (type) {
     case "paragraph":
-      return (
-        <p>
-          <Text text={value.text} />
-        </p>
-      );
+      return (value.text.length > 0 && value.text[0].type == 'equation') ? (
+        <BlockMath math={value.text[0].equation.expression}/>
+      ) : (<p>
+        <Text text={value.text} />
+      </p>);
     case "heading_1":
       return (
         <h1>
@@ -146,17 +146,16 @@ export default function Post({ page, blocks }) {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <article className={styles.container}>
-        <h1 className={styles.name}>
-          <Text text={page.properties.Name.title} />
-        </h1>
-        <section>
+      <article className="px-5 max-w-3xl mx-auto mt-8 md:mt-18">
+        <header>
+          <h1 className="font-bold text-3xl py-8">
+            <Text text={page.properties.Name.title} />
+          </h1>
+        </header>
+        <section className="border-y border-black/10 py-12">
           {blocks.map((block) => (
             <Fragment key={block.id}>{renderBlock(block)}</Fragment>
-          ))}
-          <Link href="/">
-            <a className={styles.back}>← Go home</a>
-          </Link>
+            ))}
         </section>
       </article>
     </div>
@@ -164,15 +163,20 @@ export default function Post({ page, blocks }) {
 }
 
 export const getStaticPaths = async () => {
-  const database = await getDatabase(databaseId);
+  const database = await getDatabase();
   return {
-    paths: database.map((page) => ({ params: { id: page.id } })),
+    paths: database.map((page) => ({
+      params: {
+        slug: page.properties.Slug.url 
+      }
+    })),
     fallback: true,
   };
 };
 
 export const getStaticProps = async (context) => {
-  const { id } = context.params;
+  const { slug } = context.params;
+  const id = await getId(slug);
   const page = await getPage(id);
   const blocks = await getBlocks(id);
 
