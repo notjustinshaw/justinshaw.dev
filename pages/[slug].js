@@ -1,9 +1,14 @@
-import { Fragment } from "react";
+import { Fragment, useState } from "react";
 import Head from "next/head";
 import 'katex/dist/katex.min.css';
 import { getDatabase, getPage, getBlocks, getId } from "../lib/notion";
 import Link from "next/link";
 import { BlockMath } from 'react-katex';
+import Editor from 'react-simple-code-editor';
+import { highlight, languages } from 'prismjs/components/prism-core';
+import 'prismjs/components/prism-clike';
+import 'prismjs/components/prism-java';
+import 'prismjs/components/prism-javascript';
 
 export const Text = ({ text }) => {
   if (text.length == 0) {
@@ -22,7 +27,7 @@ export const Text = ({ text }) => {
           italic ? "italic" : "",
           strikethrough ? "line-through" : "",
           underline ? "underline" : "",
-        ].join(" ")}
+        ].join(" ").trim()}
         style={color !== "default" ? { color } : {}}
         >
         {text.link ? <a href={text.link.url}>{text.content}</a> : text.content}
@@ -39,37 +44,47 @@ const renderBlock = (block) => {
     case "paragraph":
       return (value.text.length > 0 && value.text[0].type == 'equation') ? (
         <BlockMath math={value.text[0].equation.expression}/>
-      ) : (<p>
-        <Text text={value.text} />
-      </p>);
-    case "heading_1":
-      return (
-        <h1>
+      ) : (
+        <p className="pb-6 text-gray-800 text-[19px] font-normal">
           <Text text={value.text} />
+        </p>
+      );
+    case "heading_1":
+      const tag = value.text[0].plain_text.toLowerCase().replace(" ", "-");
+      return (
+        <h1 className="my-6 block text-2xl text-left leading-8 font-semibold tracking-tight text-indigo-800 sm:text-4xl">
+          <a id={tag} href={`#${tag}`}>
+            <Text text={value.text} />
+          </a>
         </h1>
       );
     case "heading_2":
       return (
-        <h2>
+        <h2 className="my-6 block text-xl sm:text-3xl text-left leading-8 font-semibold tracking-tight text-gray-800">
           <Text text={value.text} />
         </h2>
       );
     case "heading_3":
       return (
-        <h3>
+        <h3 className="my-6 block text-xl sm:text-2xl text-left leading-8 font-medium tracking-tight text-gray-800">
           <Text text={value.text} />
         </h3>
       );
     case "bulleted_list_item":
+      return (
+        <li className="text-[19px] list-disc pb-3 pl-8  marker:text-indigo-500">
+          <Text text={value.text} />
+        </li>
+      );
     case "numbered_list_item":
       return (
-        <li>
+        <li className="text-[19px] list-decimal pb-3 pl-8 marker:text-indigo-600">
           <Text text={value.text} />
         </li>
       );
     case "to_do":
       return (
-        <div>
+        <div className="text-[19px] pb-1 pl-8">
           <label htmlFor={id}>
             <input type="checkbox" id={id} defaultChecked={value.checked} />{" "}
             <Text text={value.text} />
@@ -102,14 +117,30 @@ const renderBlock = (block) => {
     case "divider":
       return <hr key={id} />;
     case "quote":
-      return <blockquote key={id}>{value.text[0].plain_text}</blockquote>;
-    case "code":
       return (
-        <pre className={styles.pre}>
-          <code className={styles.code_block} key={id}>
-            {value.text[0].plain_text}
-          </code>
-        </pre>
+        <blockquote key={id} className="p-4 my-6 text-lg sm:text-xl text-left leading-8 font-medium tracking-tight text-gray-800 bg-gray-100 rounded-r-lg border-l-4 border-gray-800">
+          {value.text[0].plain_text}
+        </blockquote>
+      );
+    case "code":
+      console.log(value);
+      const lang = languages.java;
+      const [code, setCode] = useState(value.text.reduce((a, v) => {
+        return a + v.plain_text;
+      }, ""));
+      return (
+        <Editor
+          className="editor select-none border-none"
+          value={code}
+          onValueChange={() => {}}
+          highlight={(code) => highlight(code, lang)}
+          padding={10}
+          tabSize={2}
+          style={{
+            fontFamily: '"Fira code", "Fira Mono", monospace',
+            fontSize: 15,
+          }}
+        />
       );
     case "file":
       const src_file =
@@ -127,6 +158,37 @@ const renderBlock = (block) => {
           </div>
           {caption_file && <figcaption>{caption_file}</figcaption>}
         </figure>
+      );
+    case "callout":
+      let bg_color = 'bg-gray-100';
+      let border_color = 'border-gray-800';
+      if (value.icon.type === 'emoji') {
+        if (value.icon.emoji === '✅') {
+          bg_color = 'bg-green-100';
+          border_color = 'border-green-800';
+        } else if (value.icon.emoji === '❌') {
+          bg_color = 'bg-red-100';
+          border_color = 'border-red-800';
+        } else if (value.icon.emoji === '⚠️') {
+          bg_color = 'bg-orange-100';
+          border_color = 'border-orange-800';
+        } else if (value.icon.emoji === '🔔') {
+          bg_color = 'bg-yellow-100';
+          border_color = 'border-yellow-800';
+        } else if (value.icon.emoji === '💡') {
+          bg_color = 'bg-blue-100';
+          border_color = 'border-blue-800';
+        }
+      }
+      return (
+        <div key={id} className={`relative p-4 my-6 text-lg sm:text-xl text-left leading-8 font-normal tracking-tight text-gray-800 ${bg_color} rounded-r-lg border-l-4 ${border_color}`}>
+          {value.icon.type === "emoji" &&
+            <div className="absolute -top-4 -left-5 px-2 py-1 rounded-full bg-white">
+              {value.icon.emoji}
+            </div>
+          }
+          {value.text[0].plain_text}
+        </div>
       );
     default:
       return `❌ Unsupported block (${
@@ -148,11 +210,11 @@ export default function Post({ page, blocks }) {
 
       <article className="px-5 max-w-3xl mx-auto mt-8 md:mt-18">
         <header>
-          <h1 className="font-bold text-3xl py-8">
+          <h1 className="font-semibold text-center text-4xl py-6 sm:py-16">
             <Text text={page.properties.Name.title} />
           </h1>
         </header>
-        <section className="border-y border-black/10 py-12">
+        <section>
           {blocks.map((block) => (
             <Fragment key={block.id}>{renderBlock(block)}</Fragment>
             ))}

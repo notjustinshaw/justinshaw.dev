@@ -1,3 +1,27 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@font-face {
+  font-family: "Wotfard";
+  src: local("Wotfard"), url("../public/fonts/wotfard/wotfard-medium.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Wotfard";
+  src: local("Wotfard"), url("../public/fonts/wotfard/wotfard-regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Wotfard";
+  src: local("Wotfard"), url("../public/fonts/wotfard/wotfard-semibold.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+}
+
+/* Syntax highlighting */
+@import "./github-light-theme.css";
