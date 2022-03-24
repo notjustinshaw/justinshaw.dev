@@ -3,7 +3,7 @@ import Head from "next/head";
 import 'katex/dist/katex.min.css';
 import { getDatabase, getPage, getBlocks, getId } from "../lib/notion";
 import Link from "next/link";
-import { BlockMath } from 'react-katex';
+import { BlockMath, InlineMath } from 'react-katex';
 import Editor from 'react-simple-code-editor';
 import { highlight, languages } from 'prismjs/components/prism-core';
 import 'prismjs/components/prism-clike';
@@ -19,20 +19,24 @@ export const Text = ({ text }) => {
       annotations: { bold, code, color, italic, strikethrough, underline },
       text
     } = value;
-    return (
-      <span
-        className={[
-          bold ? "font-bold" : "",
-          code ? "font-mono" : "",
-          italic ? "italic" : "",
-          strikethrough ? "line-through" : "",
-          underline ? "underline" : "",
-        ].join(" ").trim()}
-        style={color !== "default" ? { color } : {}}
+    if (value.type == 'equation'){
+      return <InlineMath math={value.equation.expression}/>
+    } else {
+      return (
+        <span
+          className={[
+            bold ? "font-bold" : "",
+            code ? "font-mono" : "",
+            italic ? "italic" : "",
+            strikethrough ? "line-through" : "",
+            underline ? "underline" : "",
+          ].join(" ").trim()}
+          style={color !== "default" ? { color } : {}}
         >
-        {text.link ? <a href={text.link.url}>{text.content}</a> : text.content}
-      </span>
-    );
+          {text.link ? <a href={text.link.url}>{text.content}</a> : text.content}
+        </span>
+      );
+    }
   });
 };
 
@@ -188,6 +192,13 @@ const renderBlock = (block) => {
             </div>
           }
           {value.text[0].plain_text}
+        </div>
+      );
+    case "equation":
+      console.error(block);
+      return (
+        <div className="w-full flex justify-center py-4 text-[19px]">
+          <InlineMath math={block.equation.expression}/>
         </div>
       );
     default:
