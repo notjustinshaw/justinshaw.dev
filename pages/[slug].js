@@ -26,7 +26,7 @@ export const Text = ({ text }) => {
         <span
           className={[
             bold ? "font-bold" : "",
-            code ? "font-mono" : "",
+            code ? "font-mono text-red-600 text-[14px] bg-black/5 px-1.5 py-1 rounded" : "",
             italic ? "italic" : "",
             strikethrough ? "line-through" : "",
             underline ? "underline" : "",
@@ -40,7 +40,7 @@ export const Text = ({ text }) => {
   });
 };
 
-const renderBlock = (block) => {
+const renderBlock = (block, i, blocks) => {
   const { type, id } = block;
   const value = block[type];
 
@@ -56,7 +56,7 @@ const renderBlock = (block) => {
     case "heading_1":
       const tag = value.text[0].plain_text.toLowerCase().replace(" ", "-");
       return (
-        <h1 className="my-6 block text-2xl text-left leading-8 font-semibold tracking-tight text-indigo-800 sm:text-4xl">
+        <h1 className="my-12 block text-2xl text-left leading-8 font-semibold tracking-tight text-indigo-800 sm:text-4xl">
           <a id={tag} href={`#${tag}`}>
             <Text text={value.text} />
           </a>
@@ -64,7 +64,7 @@ const renderBlock = (block) => {
       );
     case "heading_2":
       return (
-        <h2 className="my-6 block text-xl sm:text-3xl text-left leading-8 font-semibold tracking-tight text-gray-800">
+        <h2 className="my-8 block text-xl sm:text-3xl text-left leading-8 font-semibold tracking-tight text-gray-800">
           <Text text={value.text} />
         </h2>
       );
@@ -81,11 +81,23 @@ const renderBlock = (block) => {
         </li>
       );
     case "numbered_list_item":
-      return (
-        <li className="text-[19px] list-decimal pb-3 pl-8 marker:text-indigo-600">
-          <Text text={value.text} />
-        </li>
-      );
+      if (i === 0 || blocks[i - 1].type !== "numbered_list_item") {
+        const last = blocks.findIndex((blk, idx) => idx > i && blk.type !== "numbered_list_item");
+        return (
+          <ol className="list-inside">
+            {blocks
+              .filter((_blk, idx) => idx >= i && idx < last)
+              .map((block) => {
+                return (
+                  <li key={block.id} className="text-[19px] list-decimal pb-3 pl-8 marker:text-indigo-600">
+                    <Text text={block[block.type].text} />
+                  </li>
+                );
+              })}
+          </ol>
+        );
+      }
+      return <></>;
     case "to_do":
       return (
         <div className="text-[19px] pb-1 pl-8">
@@ -127,9 +139,8 @@ const renderBlock = (block) => {
         </blockquote>
       );
     case "code":
-      console.log(value);
       const lang = languages.java;
-      const [code, setCode] = useState(value.text.reduce((a, v) => {
+      const [code, _setCode] = useState(value.text.reduce((a, v) => {
         return a + v.plain_text;
       }, ""));
       return (
@@ -184,6 +195,7 @@ const renderBlock = (block) => {
           border_color = 'border-blue-800';
         }
       }
+      console.log(value);
       return (
         <div key={id} className={`relative p-4 my-6 text-lg sm:text-xl text-left leading-8 font-normal tracking-tight text-gray-800 ${bg_color} rounded-r-lg border-l-4 ${border_color}`}>
           {value.icon.type === "emoji" &&
@@ -191,11 +203,10 @@ const renderBlock = (block) => {
               {value.icon.emoji}
             </div>
           }
-          {value.text[0].plain_text}
+          {<Text text={value.text} />}
         </div>
       );
     case "equation":
-      console.error(block);
       return (
         <div className="w-full flex justify-center py-4 text-[19px]">
           <InlineMath math={block.equation.expression}/>
@@ -225,10 +236,12 @@ export default function Post({ page, blocks }) {
             <Text text={page.properties.Name.title} />
           </h1>
         </header>
-        <section>
-          {blocks.map((block) => (
-            <Fragment key={block.id}>{renderBlock(block)}</Fragment>
-            ))}
+        <section className="md:mb-24">
+          {blocks.map((block, i, blocks) => (
+            <Fragment key={block.id}>
+              {renderBlock(block, i, blocks)}
+            </Fragment>
+          ))}
         </section>
       </article>
     </div>
