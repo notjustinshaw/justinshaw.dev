@@ -135,7 +135,7 @@ const renderBlock = (block, i, blocks) => {
     case "quote":
       return (
         <blockquote key={id} className="p-4 my-6 text-lg sm:text-xl text-left leading-8 font-medium tracking-tight text-gray-800 bg-gray-100 rounded-r-lg border-l-4 border-gray-800">
-          {value.text[0].plain_text}
+          {<Text text={value.text} />}
         </blockquote>
       );
     case "code":
