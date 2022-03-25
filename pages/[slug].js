@@ -9,6 +9,7 @@ import { highlight, languages } from 'prismjs/components/prism-core';
 import 'prismjs/components/prism-clike';
 import 'prismjs/components/prism-java';
 import 'prismjs/components/prism-javascript';
+import Gist from 'react-gist';
 
 export const Text = ({ text }) => {
   if (text.length == 0) {
@@ -195,7 +196,6 @@ const renderBlock = (block, i, blocks) => {
           border_color = 'border-blue-800';
         }
       }
-      console.log(value);
       return (
         <div key={id} className={`relative p-4 my-6 text-lg sm:text-xl text-left leading-8 font-normal tracking-tight text-gray-800 ${bg_color} rounded-r-lg border-l-4 ${border_color}`}>
           {value.icon.type === "emoji" &&
@@ -212,7 +212,14 @@ const renderBlock = (block, i, blocks) => {
           <InlineMath math={block.equation.expression}/>
         </div>
       );
+    case "embed":
+      const url = block.embed.url;
+      const splitURL = url.split("/");
+      const gistID = splitURL[splitURL.length - 1];
+      return <Gist id={gistID} />;
     default:
+      console.log("Unknown block type:", block.type);
+      console.log(block);
       return `❌ Unsupported block (${
         type === "unsupported" ? "unsupported by Notion API" : type
       })`;
