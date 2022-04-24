@@ -4,6 +4,7 @@ import 'katex/dist/katex.min.css';
 import { getDatabase, getPage, getBlocks, getId } from "../lib/notion";
 import Link from "next/link";
 import { BlockMath, InlineMath } from 'react-katex';
+import {FileSymlinkFileIcon,} from '@primer/octicons-react'
 import Editor from 'react-simple-code-editor';
 import { highlight, languages } from 'prismjs/components/prism-core';
 import 'prismjs/components/prism-clike';
@@ -126,7 +127,7 @@ const renderBlock = (block, i, blocks) => {
         value.type === "external" ? value.external.url : value.file.url;
       const caption = value.caption ? value.caption[0]?.plain_text : "";
       return (
-        <figure>
+        <figure className="flex justify-center">
           <img src={src} alt={caption} />
           {caption && <figcaption>{caption}</figcaption>}
         </figure>
@@ -217,6 +218,16 @@ const renderBlock = (block, i, blocks) => {
       const splitURL = url.split("/");
       const gistID = splitURL[splitURL.length - 1];
       return <Gist id={gistID} />;
+    case "link_to_page":
+      console.log(block);
+      return (
+        <a id={"/"} href={`#hello`} className="ml-6 flex no-underline hover:underline">
+          <FileSymlinkFileIcon aria-label="Open article" className="mr-2 h-8"/>
+          <p className="pb-6 text-gray-800 text-[19px] font-normal">
+            {block.title}
+          </p>
+        </a>
+      );
     default:
       console.log("Unknown block type:", block.type);
       console.log(block);
@@ -294,11 +305,20 @@ export const getStaticProps = async (context) => {
     }
     return block;
   });
+  const blocksWithChildrenAndLinkedPages = await Promise.all(blocksWithChildren
+    .map(async (block) => {
+      if (block.type === "link_to_page") {
+        const page = await getPage(block.link_to_page.page_id);
+        block['slug'] = page.properties.Slug.url;
+        block['title'] = page.properties.Name.title[0].plain_text;
+      }
+      return block;
+    }));
 
   return {
     props: {
       page,
-      blocks: blocksWithChildren,
+      blocks: blocksWithChildrenAndLinkedPages,
     },
     revalidate: 1,
   };
