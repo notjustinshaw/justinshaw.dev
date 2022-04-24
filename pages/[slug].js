@@ -221,7 +221,7 @@ const renderBlock = (block, i, blocks) => {
     case "link_to_page":
       console.log(block);
       return (
-        <a id={"/"} href={`#hello`} className="ml-6 flex no-underline hover:underline">
+        <a id={block.slug} href={`/${block.slug}`} className="ml-6 flex no-underline hover:underline">
           <FileSymlinkFileIcon aria-label="Open article" className="mr-2 h-8"/>
           <p className="pb-6 text-gray-800 text-[19px] font-normal">
             {block.title}
