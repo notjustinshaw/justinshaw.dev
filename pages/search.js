@@ -5,6 +5,7 @@ export const getStaticProps = gsp;
 
 const Search = ({ posts }) => {
   const router = useRouter();
+  
   return Landing({
     posts,
     subtitle: router.asPath.split('=')[1]

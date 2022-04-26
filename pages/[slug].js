@@ -1,16 +1,19 @@
-import { Fragment, useState } from "react";
+import { Fragment, useState, useEffect } from "react";
+import { getScrollPct } from "../lib/scroll";
 import Head from "next/head";
 import 'katex/dist/katex.min.css';
 import { getDatabase, getPage, getBlocks, getId } from "../lib/notion";
 import Link from "next/link";
 import { BlockMath, InlineMath } from 'react-katex';
-import {FileSymlinkFileIcon,} from '@primer/octicons-react'
+import {FileSymlinkFileIcon,} from '@primer/octicons-react';
 import Editor from 'react-simple-code-editor';
 import { highlight, languages } from 'prismjs/components/prism-core';
 import 'prismjs/components/prism-clike';
 import 'prismjs/components/prism-java';
 import 'prismjs/components/prism-javascript';
 import Gist from 'react-gist';
+import Cookies from 'js-cookie';
+import { track } from '@amplitude/analytics-browser';
 
 export const Text = ({ text }) => {
   if (text.length == 0) {
@@ -78,7 +81,7 @@ const renderBlock = (block, i, blocks) => {
       );
     case "bulleted_list_item":
       return (
-        <li className="text-[19px] list-disc pb-3 pl-8  marker:text-indigo-500">
+        <li key={block.id} className="text-[19px] list-disc pb-3 pl-8  marker:text-indigo-500">
           <Text text={value.text} />
         </li>
       );
@@ -219,7 +222,6 @@ const renderBlock = (block, i, blocks) => {
       const gistID = splitURL[splitURL.length - 1];
       return <Gist id={gistID} />;
     case "link_to_page":
-      console.log(block);
       return (
         <a id={block.slug} href={`/${block.slug}`} className="ml-6 flex no-underline hover:underline">
           <FileSymlinkFileIcon aria-label="Open article" className="mr-2 h-8"/>
@@ -237,12 +239,38 @@ const renderBlock = (block, i, blocks) => {
   }
 };
 
-export default function Post({ page, blocks }) {
+export default function Post({ page, slug, blocks }) {
   if (!page || !blocks) {
     return <div />;
   }
+
+  let scrollBreakpoints = [10, 50, 90];
+  let maxScrollPct = 0;
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const newScrollPct = getScrollPct(document);
+      for (let i = 0; i < scrollBreakpoints.length; i++) {
+        if (newScrollPct > scrollBreakpoints[i]) {
+          track('scroll_article', {
+            slug,
+            scroll: scrollBreakpoints[i]
+          });
+          maxScrollPct = Math.max(newScrollPct, maxScrollPct);
+          scrollBreakpoints = scrollBreakpoints.filter((b) => b > maxScrollPct);
+        }
+      }
+    }
+    track('load_article', {
+      ...Cookies.get(),
+      slug
+    });
+    window.addEventListener('mousewheel', handleScroll, true);
+    window.addEventListener('touchmove', handleScroll, true);
+  }, []);
+
   return (
-    <div>
+    <main>
       <Head>
         <title>{page.properties.Name.title[0].plain_text}</title>
         <link rel="icon" href="/favicon.ico" />
@@ -262,7 +290,7 @@ export default function Post({ page, blocks }) {
           ))}
         </section>
       </article>
-    </div>
+    </main>
   );
 }
 
@@ -318,6 +346,7 @@ export const getStaticProps = async (context) => {
   return {
     props: {
       page,
+      slug,
       blocks: blocksWithChildrenAndLinkedPages,
     },
     revalidate: 1,
