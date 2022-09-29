@@ -269,11 +269,19 @@ export default function Post({ page, slug, blocks }) {
     window.addEventListener('touchmove', handleScroll, true);
   }, []);
 
+  let title = page.properties.Name.title[0].plain_text;
+
   return (
     <main>
       <Head>
-        <title>{page.properties.Name.title[0].plain_text}</title>
+        <title>{title}</title>
         <link rel="icon" href="/favicon.ico" />
+        <meta property="og:url" content={`https://www.justinshaw.dev/${slug}`} />
+        <meta property="og:title" content={title} />
+        <meta property="og:description" content={title} />
+        <meta property="og:image" content={`/api/og-image?title=${title}`} />
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:creator" content="@notjustinshaw" />
       </Head>
 
       <article className="px-5 max-w-3xl mx-auto mt-8 md:mt-18">

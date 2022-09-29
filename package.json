@@ -15,8 +15,10 @@
     "@notionhq/client": "^0.4.4",
     "@primer/octicons-react": "^17.0.0",
     "@tailwindcss/forms": "^0.5.0",
+    "chrome-aws-lambda": "^10.1.0",
     "js-cookie": "^3.0.1",
     "next": "^12.0.10",
+    "next-api-og-image": "^4.3.0",
     "npm": "^8.5.5",
     "prismjs": "^1.27.0",
     "prop-types": "^15.8.1",
@@ -29,8 +31,10 @@
   },
   "devDependencies": {
     "@types/prismjs": "^1.26.0",
+    "@types/react": "^18.0.21",
     "autoprefixer": "^10.4.2",
     "postcss": "^8.4.6",
-    "tailwindcss": "^3.0.18"
+    "tailwindcss": "^3.0.18",
+    "typescript": "^4.8.4"
   }
 }
