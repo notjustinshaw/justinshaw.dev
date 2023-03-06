@@ -1,6 +1,6 @@
 import "../styles/globals.css";
-import { init } from '@amplitude/analytics-browser';
-import Cookies from 'js-cookie';
+import { init } from "@amplitude/analytics-browser";
+import Cookies from "js-cookie";
 
 export function reportWebVitals(metric) {
   Cookies.set(metric.name, metric.value);

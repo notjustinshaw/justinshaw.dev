@@ -1,4 +1,4 @@
-import { withOGImage } from 'next-api-og-image'
+import { withOGImage } from "next-api-og-image";
 
 export default withOGImage({
   template: {
@@ -26,8 +26,8 @@ export default withOGImage({
       </html>
     `,
   },
-  cacheControl: 'public, max-age=604800, immutable',
+  cacheControl: "public, max-age=604800, immutable",
   dev: {
     inspectHtml: false,
   },
-})
+});

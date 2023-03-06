@@ -1,19 +1,19 @@
 import { Fragment, useState, useEffect } from "react";
 import { getScrollPct } from "../lib/scroll";
 import Head from "next/head";
-import 'katex/dist/katex.min.css';
+import "katex/dist/katex.min.css";
 import { getDatabase, getPage, getBlocks, getId } from "../lib/notion";
 import Link from "next/link";
-import { BlockMath, InlineMath } from 'react-katex';
-import {FileSymlinkFileIcon,} from '@primer/octicons-react';
-import Editor from 'react-simple-code-editor';
-import { highlight, languages } from 'prismjs/components/prism-core';
-import 'prismjs/components/prism-clike';
-import 'prismjs/components/prism-java';
-import 'prismjs/components/prism-javascript';
-import Gist from 'react-gist';
-import Cookies from 'js-cookie';
-import { track } from '@amplitude/analytics-browser';
+import { BlockMath, InlineMath } from "react-katex";
+import { FileSymlinkFileIcon } from "@primer/octicons-react";
+import Editor from "react-simple-code-editor";
+import { highlight, languages } from "prismjs/components/prism-core";
+import "prismjs/components/prism-clike";
+import "prismjs/components/prism-java";
+import "prismjs/components/prism-javascript";
+import Gist from "react-gist";
+import Cookies from "js-cookie";
+import { track } from "@amplitude/analytics-browser";
 
 export const Text = ({ text }) => {
   if (text.length == 0) {
@@ -22,23 +22,31 @@ export const Text = ({ text }) => {
   return text.map((value) => {
     const {
       annotations: { bold, code, color, italic, strikethrough, underline },
-      text
+      text,
     } = value;
-    if (value.type == 'equation'){
-      return <InlineMath math={value.equation.expression}/>
+    if (value.type == "equation") {
+      return <InlineMath math={value.equation.expression} />;
     } else {
       return (
         <span
           className={[
             bold ? "font-bold" : "",
-            code ? "font-mono text-red-600 text-[14px] bg-black/5 px-1.5 py-1 rounded" : "",
+            code
+              ? "bg-black/5 rounded px-1.5 py-1 font-mono text-[14px] text-red-600"
+              : "",
             italic ? "italic" : "",
             strikethrough ? "line-through" : "",
             underline ? "underline" : "",
-          ].join(" ").trim()}
+          ]
+            .join(" ")
+            .trim()}
           style={color !== "default" ? { color } : {}}
         >
-          {text.link ? <a href={text.link.url}>{text.content}</a> : text.content}
+          {text.link ? (
+            <a href={text.link.url}>{text.content}</a>
+          ) : (
+            text.content
+          )}
         </span>
       );
     }
@@ -51,17 +59,17 @@ const renderBlock = (block, i, blocks) => {
 
   switch (type) {
     case "paragraph":
-      return (value.text.length > 0 && value.text[0].type == 'equation') ? (
-        <BlockMath math={value.text[0].equation.expression}/>
+      return value.text.length > 0 && value.text[0].type == "equation" ? (
+        <BlockMath math={value.text[0].equation.expression} />
       ) : (
-        <p className="pb-6 text-gray-800 text-[19px] font-normal">
+        <p className="pb-6 text-[19px] font-normal text-gray-800">
           <Text text={value.text} />
         </p>
       );
     case "heading_1":
       const tag = value.text[0].plain_text.toLowerCase().replace(" ", "-");
       return (
-        <h1 className="my-12 block text-2xl text-left leading-8 font-semibold tracking-tight text-indigo-800 sm:text-4xl">
+        <h1 className="text-indigo-800 my-12 block text-left text-2xl font-semibold leading-8 tracking-tight sm:text-4xl">
           <a id={tag} href={`#${tag}`}>
             <Text text={value.text} />
           </a>
@@ -69,32 +77,40 @@ const renderBlock = (block, i, blocks) => {
       );
     case "heading_2":
       return (
-        <h2 className="my-8 block text-xl sm:text-3xl text-left leading-8 font-semibold tracking-tight text-gray-800">
+        <h2 className="my-8 block text-left text-xl font-semibold leading-8 tracking-tight text-gray-800 sm:text-3xl">
           <Text text={value.text} />
         </h2>
       );
     case "heading_3":
       return (
-        <h3 className="my-6 block text-xl sm:text-2xl text-left leading-8 font-medium tracking-tight text-gray-800">
+        <h3 className="my-6 block text-left text-xl font-medium leading-8 tracking-tight text-gray-800 sm:text-2xl">
           <Text text={value.text} />
         </h3>
       );
     case "bulleted_list_item":
       return (
-        <li key={block.id} className="text-[19px] list-disc pb-3 pl-8  marker:text-indigo-500">
+        <li
+          key={block.id}
+          className="marker:text-indigo-500 list-disc pb-3 pl-8  text-[19px]"
+        >
           <Text text={value.text} />
         </li>
       );
     case "numbered_list_item":
       if (i === 0 || blocks[i - 1].type !== "numbered_list_item") {
-        const last = blocks.findIndex((blk, idx) => idx > i && blk.type !== "numbered_list_item");
+        const last = blocks.findIndex(
+          (blk, idx) => idx > i && blk.type !== "numbered_list_item"
+        );
         return (
           <ol className="list-inside">
             {blocks
               .filter((_blk, idx) => idx >= i && idx < last)
               .map((block) => {
                 return (
-                  <li key={block.id} className="text-[19px] list-decimal pb-3 pl-8 marker:text-indigo-600">
+                  <li
+                    key={block.id}
+                    className="marker:text-indigo-600 list-decimal pb-3 pl-8 text-[19px]"
+                  >
                     <Text text={block[block.type].text} />
                   </li>
                 );
@@ -105,7 +121,7 @@ const renderBlock = (block, i, blocks) => {
       return <></>;
     case "to_do":
       return (
-        <div className="text-[19px] pb-1 pl-8">
+        <div className="pb-1 pl-8 text-[19px]">
           <label htmlFor={id}>
             <input type="checkbox" id={id} defaultChecked={value.checked} />{" "}
             <Text text={value.text} />
@@ -139,15 +155,20 @@ const renderBlock = (block, i, blocks) => {
       return <hr key={id} />;
     case "quote":
       return (
-        <blockquote key={id} className="p-4 my-6 text-lg sm:text-xl text-left leading-8 font-medium tracking-tight text-gray-800 bg-gray-100 rounded-r-lg border-l-4 border-gray-800">
+        <blockquote
+          key={id}
+          className="my-6 rounded-r-lg border-l-4 border-gray-800 bg-gray-100 p-4 text-left text-lg font-medium leading-8 tracking-tight text-gray-800 sm:text-xl"
+        >
           {<Text text={value.text} />}
         </blockquote>
       );
     case "code":
       const lang = languages.java;
-      const [code, _setCode] = useState(value.text.reduce((a, v) => {
-        return a + v.plain_text;
-      }, ""));
+      const [code, _setCode] = useState(
+        value.text.reduce((a, v) => {
+          return a + v.plain_text;
+        }, "")
+      );
       return (
         <Editor
           className="editor select-none border-none"
@@ -180,40 +201,43 @@ const renderBlock = (block, i, blocks) => {
         </figure>
       );
     case "callout":
-      let bg_color = 'bg-gray-100';
-      let border_color = 'border-gray-800';
-      if (value.icon.type === 'emoji') {
-        if (value.icon.emoji === '✅') {
-          bg_color = 'bg-green-100';
-          border_color = 'border-green-800';
-        } else if (value.icon.emoji === '❌') {
-          bg_color = 'bg-red-100';
-          border_color = 'border-red-800';
-        } else if (value.icon.emoji === '⚠️') {
-          bg_color = 'bg-orange-100';
-          border_color = 'border-orange-800';
-        } else if (value.icon.emoji === '🔔') {
-          bg_color = 'bg-yellow-100';
-          border_color = 'border-yellow-800';
-        } else if (value.icon.emoji === '💡') {
-          bg_color = 'bg-blue-100';
-          border_color = 'border-blue-800';
+      let bg_color = "bg-gray-100";
+      let border_color = "border-gray-800";
+      if (value.icon.type === "emoji") {
+        if (value.icon.emoji === "✅") {
+          bg_color = "bg-green-100";
+          border_color = "border-green-800";
+        } else if (value.icon.emoji === "❌") {
+          bg_color = "bg-red-100";
+          border_color = "border-red-800";
+        } else if (value.icon.emoji === "⚠️") {
+          bg_color = "bg-orange-100";
+          border_color = "border-orange-800";
+        } else if (value.icon.emoji === "🔔") {
+          bg_color = "bg-yellow-100";
+          border_color = "border-yellow-800";
+        } else if (value.icon.emoji === "💡") {
+          bg_color = "bg-blue-100";
+          border_color = "border-blue-800";
         }
       }
       return (
-        <div key={id} className={`relative p-4 my-6 text-lg sm:text-xl text-left leading-8 font-normal tracking-tight text-gray-800 ${bg_color} rounded-r-lg border-l-4 ${border_color}`}>
-          {value.icon.type === "emoji" &&
-            <div className="absolute -top-4 -left-5 px-2 py-1 rounded-full bg-white">
+        <div
+          key={id}
+          className={`relative my-6 p-4 text-left text-lg font-normal leading-8 tracking-tight text-gray-800 sm:text-xl ${bg_color} rounded-r-lg border-l-4 ${border_color}`}
+        >
+          {value.icon.type === "emoji" && (
+            <div className="bg-white absolute -top-4 -left-5 rounded-full px-2 py-1">
               {value.icon.emoji}
             </div>
-          }
+          )}
           {<Text text={value.text} />}
         </div>
       );
     case "equation":
       return (
-        <div className="w-full flex justify-center py-4 text-[19px]">
-          <InlineMath math={block.equation.expression}/>
+        <div className="flex w-full justify-center py-4 text-[19px]">
+          <InlineMath math={block.equation.expression} />
         </div>
       );
     case "embed":
@@ -223,9 +247,13 @@ const renderBlock = (block, i, blocks) => {
       return <Gist id={gistID} />;
     case "link_to_page":
       return (
-        <a id={block.slug} href={`/${block.slug}`} className="ml-6 flex no-underline hover:underline">
-          <FileSymlinkFileIcon aria-label="Open article" className="mr-2 h-8"/>
-          <p className="pb-6 text-gray-800 text-[19px] font-normal">
+        <a
+          id={block.slug}
+          href={`/${block.slug}`}
+          className="ml-6 flex no-underline hover:underline"
+        >
+          <FileSymlinkFileIcon aria-label="Open article" className="mr-2 h-8" />
+          <p className="pb-6 text-[19px] font-normal text-gray-800">
             {block.title}
           </p>
         </a>
@@ -252,21 +280,21 @@ export default function Post({ page, slug, blocks }) {
       const newScrollPct = getScrollPct(document);
       for (let i = 0; i < scrollBreakpoints.length; i++) {
         if (newScrollPct > scrollBreakpoints[i]) {
-          track('scroll_article', {
+          track("scroll_article", {
             slug,
-            scroll: scrollBreakpoints[i]
+            scroll: scrollBreakpoints[i],
           });
           maxScrollPct = Math.max(newScrollPct, maxScrollPct);
           scrollBreakpoints = scrollBreakpoints.filter((b) => b > maxScrollPct);
         }
       }
-    }
-    track('load_article', {
+    };
+    track("load_article", {
       ...Cookies.get(),
-      slug
+      slug,
     });
-    window.addEventListener('mousewheel', handleScroll, true);
-    window.addEventListener('touchmove', handleScroll, true);
+    window.addEventListener("mousewheel", handleScroll, true);
+    window.addEventListener("touchmove", handleScroll, true);
   }, []);
 
   let title = page.properties.Name.title[0].plain_text;
@@ -276,7 +304,10 @@ export default function Post({ page, slug, blocks }) {
       <Head>
         <title>{title}</title>
         <link rel="icon" href="/favicon.ico" />
-        <meta property="og:url" content={`https://www.justinshaw.dev/${slug}`} />
+        <meta
+          property="og:url"
+          content={`https://www.justinshaw.dev/${slug}`}
+        />
         <meta property="og:title" content={title} />
         <meta property="og:description" content={title} />
         <meta property="og:image" content={`/api/og-image?title=${title}`} />
@@ -284,17 +315,15 @@ export default function Post({ page, slug, blocks }) {
         <meta name="twitter:creator" content="@notjustinshaw" />
       </Head>
 
-      <article className="px-5 max-w-3xl mx-auto mt-8 md:mt-18">
+      <article className="md:mt-18 mx-auto mt-8 max-w-3xl px-5">
         <header>
-          <h1 className="font-semibold text-center text-4xl py-6 sm:py-16">
+          <h1 className="py-6 text-center text-4xl font-semibold sm:py-16">
             <Text text={page.properties.Name.title} />
           </h1>
         </header>
         <section className="md:mb-24">
           {blocks.map((block, i, blocks) => (
-            <Fragment key={block.id}>
-              {renderBlock(block, i, blocks)}
-            </Fragment>
+            <Fragment key={block.id}>{renderBlock(block, i, blocks)}</Fragment>
           ))}
         </section>
       </article>
@@ -307,8 +336,8 @@ export const getStaticPaths = async () => {
   return {
     paths: database.map((page) => ({
       params: {
-        slug: page.properties.Slug.url 
-      }
+        slug: page.properties.Slug.url,
+      },
     })),
     fallback: true,
   };
@@ -341,15 +370,16 @@ export const getStaticProps = async (context) => {
     }
     return block;
   });
-  const blocksWithChildrenAndLinkedPages = await Promise.all(blocksWithChildren
-    .map(async (block) => {
+  const blocksWithChildrenAndLinkedPages = await Promise.all(
+    blocksWithChildren.map(async (block) => {
       if (block.type === "link_to_page") {
         const page = await getPage(block.link_to_page.page_id);
-        block['slug'] = page.properties.Slug.url;
-        block['title'] = page.properties.Name.title[0].plain_text;
+        block["slug"] = page.properties.Slug.url;
+        block["title"] = page.properties.Name.title[0].plain_text;
       }
       return block;
-    }));
+    })
+  );
 
   return {
     props: {
