@@ -241,10 +241,14 @@ const renderBlock = (block, i, blocks) => {
         </div>
       );
     case "embed":
-      const url = block.embed.url;
-      const splitURL = url.split("/");
-      const gistID = splitURL[splitURL.length - 1];
-      return <Gist id={gistID} />;
+      const url = block.embed.url ?? "";
+      if (url.includes("github")) {
+        const splitURL = url.split("/");
+        const gistID = splitURL[splitURL.length - 1];
+        return <Gist id={gistID} />;
+      } else {
+        return <iframe src={url + "?embed=true"} width="100%" height="600px" />;
+      }
     case "link_to_page":
       return (
         <a
